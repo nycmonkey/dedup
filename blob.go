@@ -9,23 +9,37 @@ import (
 	"os"
 	"sync"
 
+	"encoding/json"
+
 	blake2b "github.com/minio/blake2b-simd"
 	"github.com/restic/chunker"
 )
 
 const (
-	maxChunkSize uint = 65536
+	maxChunkSize uint = 65535 // uint16 can hold size; don't change without updating Chunk struct
 )
 
 // NewBlobRepo returns a BlobRepository backed by an in-memory metadata map and on-disk key-value chunk storage
-func NewBlobRepo(pathToChunkStore string) (r *BlobRepository, err error) {
+func NewBlobRepo(pathToChunkStore string, metaFilename string) (r *BlobRepository, err error) {
 	chunks, err := NewChunkRepo(pathToChunkStore)
 	if err != nil {
 		return
 	}
+	md := make(map[string][]ChunkMetadata)
+	var f *os.File
+	f, err = os.Open(metaFilename)
+	if err == nil {
+		defer f.Close()
+		dec := json.NewDecoder(f)
+		err = dec.Decode(&md)
+		if err != nil {
+			log.Fatalln("failed to load existing blob metadata:", err)
+		}
+	}
 	return &BlobRepository{
 		chunks,
-		make(map[string][]string),
+		metaFilename,
+		md,
 		new(sync.Mutex),
 	}, nil
 }
@@ -39,22 +53,46 @@ type GetBlobRequest struct {
 	CancelCh <-chan struct{}
 }
 
+// BlobMetadata stores the information needed to rebuild a blob from chunks, and also to compare
+// overlapping data between blobs
 type BlobMetadata struct {
 	Score  string
-	Chunks []string
+	Chunks []ChunkMetadata
+}
+
+// ChunkMetadata tracks the identity and size of a single chunk of a blob. The metadata reflects
+// the chunk data before any compression or encryption is applied
+type ChunkMetadata struct {
+	// Score is the hex-encoded 256-bit Blake2 digest of the chunk
+	Score string
+	// Len is the length in bytes of the chunk
+	Len uint16
 }
 
 // BlobRepository stores and fetches Binary Large Objects ("blobs")
 type BlobRepository struct {
-	chunkRepo *KVrepository
-	md        map[string][]string
+	chunkRepo    *KVrepository
+	metaFilename string
+	md           map[string][]ChunkMetadata
 	*sync.Mutex
 }
 
 // Close safely closes the underlying chunk storage
 func (r *BlobRepository) Close() error {
 	r.Lock()
+	defer r.Unlock()
+	f, err := os.Create(r.metaFilename)
+	if err != nil {
+		return errors.New("metdata not persisted: " + err.Error())
+	}
+	defer f.Close()
+	enc := json.NewEncoder(f)
+	err = enc.Encode(r.md)
+	if err != nil {
+		return errors.New("metadata not persisted: " + err.Error())
+	}
 	return r.chunkRepo.Close()
+
 }
 
 // DumpMetadata provides a point in time dump of all scores and corresponding chunks
@@ -98,14 +136,14 @@ func (r *BlobRepository) Get(req GetBlobRequest) {
 	hash := blake2b.New256()
 	w := io.MultiWriter(hash, req.Dest)
 	// loop through stores, getting each one from chunk repository and sending down to req.Dest
-	for _, key := range meta {
+	for _, chunk := range meta {
 		select {
 		case <-req.CancelCh:
 			return
 		default:
-			log.Println("FETCHING CHUNK", key)
+			log.Println("FETCHING CHUNK", chunk.Score)
 			var score []byte
-			_, err := fmt.Sscanf(key, "%x", &score)
+			_, err := fmt.Sscanf(chunk.Score, "%x", &score)
 			if err != nil {
 				req.ErrCh <- errors.New("reading metadata: " + err.Error())
 				return
@@ -121,7 +159,7 @@ func (r *BlobRepository) Get(req GetBlobRequest) {
 				req.ErrCh <- fmt.Errorf("UNEXPECTED CHUNK %x", chunkScore)
 				return
 			}
-			fmt.Println("CHUNK RETRIEVED for", key)
+			fmt.Println("CHUNK RETRIEVED for", chunk.Score)
 			_, err = w.Write(buf)
 			if err != nil {
 				req.ErrCh <- err
@@ -149,14 +187,14 @@ func (r *BlobRepository) Put(key []byte, blob io.Reader) (err error) {
 	tee := io.TeeReader(blob, hash)
 	ckr := chunker.NewWithBoundaries(tee, chunker.Pol(0x3DA3358B4DC173), 2048, maxChunkSize)
 	buf := make([]byte, maxChunkSize)
-	var meta []string
+	var meta []ChunkMetadata
 	// track the ordered list of chunk scores
 	var chunkSeq int
 	var chunk chunker.Chunk
 	for chunk, err = ckr.Next(buf); err == nil; chunk, err = ckr.Next(buf) {
 		// store each chunk in the chunk repository
 		cHash := blake2b.Sum256(chunk.Data)
-		meta = append(meta, fmt.Sprintf("%x", cHash))
+		meta = append(meta, ChunkMetadata{Score: fmt.Sprintf("%x", cHash), Len: uint16(len(chunk.Data))})
 		fmt.Printf("blob %x %04d:%x\n", key, chunkSeq, cHash)
 		if repoErr := r.chunkRepo.Put(cHash, chunk.Data); repoErr != nil {
 			return repoErr

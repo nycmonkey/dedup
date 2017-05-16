@@ -18,16 +18,18 @@ import (
 
 var (
 	archiveDir string
+	metaFile   string
 	port       int
 )
 
 func main() {
 	flag.StringVar(&archiveDir, "d", "dedup-archive", "directory where dedup archive will be stored")
+	flag.StringVar(&metaFile, "m", "blob.meta.json", "file where blob metadata will be persisted")
 	flag.IntVar(&port, "p", 10101, "port to listen on")
 	flag.Parse()
 	stop := make(chan os.Signal)
 	signal.Notify(stop, os.Interrupt)
-	repo, err := dedup.NewBlobRepo(archiveDir)
+	repo, err := dedup.NewBlobRepo(archiveDir, metaFile)
 	if err != nil {
 		panic(err)
 	}
