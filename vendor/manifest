@@ -1,0 +1,224 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/AndreasBriese/bbloom",
+			"repository": "https://github.com/AndreasBriese/bbloom",
+			"vcs": "git",
+			"revision": "0320de81a58b973b5187098f4815608711c70f3b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/bkaradzic/go-lz4",
+			"repository": "https://github.com/bkaradzic/go-lz4",
+			"vcs": "git",
+			"revision": "7224d8d8f27ef618c0a95f1ae69dbb0488abc33a",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/boltdb/bolt",
+			"repository": "https://github.com/boltdb/bolt",
+			"vcs": "git",
+			"revision": "583e8937c61f1af6513608ccc75c97b6abdf4ff9",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/fileutil",
+			"repository": "https://github.com/cznic/fileutil",
+			"vcs": "git",
+			"revision": "90cf820aafe8f7df39416fdbb932029ff99bd1ab",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/internal/buffer",
+			"repository": "https://github.com/cznic/internal",
+			"vcs": "git",
+			"revision": "e5e1c3e9165d0a72507c2bbb0ffac1c02b8d3f7c",
+			"branch": "master",
+			"path": "/buffer",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/internal/file",
+			"repository": "https://github.com/cznic/internal",
+			"vcs": "git",
+			"revision": "e5e1c3e9165d0a72507c2bbb0ffac1c02b8d3f7c",
+			"branch": "master",
+			"path": "file",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/internal/slice",
+			"repository": "https://github.com/cznic/internal",
+			"vcs": "git",
+			"revision": "e5e1c3e9165d0a72507c2bbb0ffac1c02b8d3f7c",
+			"branch": "master",
+			"path": "slice",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/kv",
+			"repository": "https://github.com/cznic/kv",
+			"vcs": "git",
+			"revision": "c5de474a2ccdaed5ba5ff8b5d2d213dbf48a8b5e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/lldb",
+			"repository": "https://github.com/cznic/lldb",
+			"vcs": "git",
+			"revision": "bea8611dd5c407f3c5eab9f9c68e887a27dc6f0e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/mathutil",
+			"repository": "https://github.com/cznic/mathutil",
+			"vcs": "git",
+			"revision": "1447ad269d64ca91aa8d7079baa40b6fc8b965e7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/sortutil",
+			"repository": "https://github.com/cznic/sortutil",
+			"vcs": "git",
+			"revision": "4c7342852e65c2088c981288f2c5610d10b9f7f4",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cznic/zappy",
+			"repository": "https://github.com/cznic/zappy",
+			"vcs": "git",
+			"revision": "2533cb5b45cc6c07421468ce262899ddc9d53fb7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/dgraph-io/badger/badger",
+			"repository": "https://github.com/dgraph-io/badger",
+			"vcs": "git",
+			"revision": "a2a4479833aa5475f3bc5cf3752b6359ba5cda3b",
+			"branch": "master",
+			"path": "/badger",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/dgraph-io/badger/skl",
+			"repository": "https://github.com/dgraph-io/badger",
+			"vcs": "git",
+			"revision": "a2a4479833aa5475f3bc5cf3752b6359ba5cda3b",
+			"branch": "master",
+			"path": "skl",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/dgraph-io/badger/table",
+			"repository": "https://github.com/dgraph-io/badger",
+			"vcs": "git",
+			"revision": "a2a4479833aa5475f3bc5cf3752b6359ba5cda3b",
+			"branch": "master",
+			"path": "table",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/dgraph-io/badger/y",
+			"repository": "https://github.com/dgraph-io/badger",
+			"vcs": "git",
+			"revision": "a2a4479833aa5475f3bc5cf3752b6359ba5cda3b",
+			"branch": "master",
+			"path": "y",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/edsrzf/mmap-go",
+			"repository": "https://github.com/edsrzf/mmap-go",
+			"vcs": "git",
+			"revision": "0bce6a6887123b67a60366d2c9fe2dfb74289d2e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/minio/blake2b-simd",
+			"repository": "https://github.com/minio/blake2b-simd",
+			"vcs": "git",
+			"revision": "3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/pkg/errors",
+			"repository": "https://github.com/pkg/errors",
+			"vcs": "git",
+			"revision": "c605e284fe17294bda444b34710735b29d1a9d90",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/remyoudompheng/bigfft",
+			"repository": "https://github.com/remyoudompheng/bigfft",
+			"vcs": "git",
+			"revision": "a8e77ddfb93284b9d58881f597c820a2875af336",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/restic/chunker",
+			"repository": "https://github.com/restic/chunker",
+			"vcs": "git",
+			"revision": "15748add008169ebbec6800155db55c8568700f6",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/tylertreat/BoomFilters",
+			"repository": "https://github.com/tylertreat/BoomFilters",
+			"vcs": "git",
+			"revision": "b282640b93f349cd208f8d5921df2cfaf5780ee2",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/net/context",
+			"repository": "https://go.googlesource.com/net",
+			"vcs": "git",
+			"revision": "34057069f4ab13dc4433c68d368737ebeafcccdc",
+			"branch": "master",
+			"path": "context",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/net/internal/timeseries",
+			"repository": "https://go.googlesource.com/net",
+			"vcs": "git",
+			"revision": "34057069f4ab13dc4433c68d368737ebeafcccdc",
+			"branch": "master",
+			"path": "internal/timeseries",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/net/trace",
+			"repository": "https://go.googlesource.com/net",
+			"vcs": "git",
+			"revision": "34057069f4ab13dc4433c68d368737ebeafcccdc",
+			"branch": "master",
+			"path": "/trace",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sys/unix",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "9ccfe848b9db8435a24c424abbc07a921adf1df5",
+			"branch": "master",
+			"path": "/unix",
+			"notests": true
+		}
+	]
+}
