@@ -15,10 +15,6 @@ import (
 	"github.com/restic/chunker"
 )
 
-const (
-	maxChunkSize uint = 65535 // uint16 can hold size; don't change without updating Chunk struct
-)
-
 // NewBlobRepo returns a BlobRepository backed by an in-memory metadata map and on-disk key-value chunk storage
 func NewBlobRepo(pathToChunkStore string, metaFilename string) (r *BlobRepository, err error) {
 	chunks, err := NewChunkRepo(pathToChunkStore)
@@ -186,7 +182,7 @@ func (r *BlobRepository) Put(key []byte, blob io.Reader) (err error) {
 	hash := blake2b.New256()
 	tee := io.TeeReader(blob, hash)
 	ckr := chunker.New(tee, chunker.Pol(0x3DA3358B4DC173))
-	buf := make([]byte, maxChunkSize)
+	buf := make([]byte, chunker.MaxSize)
 	var meta []ChunkMetadata
 	// track the ordered list of chunk scores
 	var chunkSeq int
