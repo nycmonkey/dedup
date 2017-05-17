@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -14,6 +15,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/nycmonkey/dedup"
+)
+
+const (
+	scoreLen = 64 // length of scores (hash hex digests)
 )
 
 var (
@@ -36,8 +41,8 @@ func main() {
 	defer repo.Close()
 	s := server{repo: repo}
 	r := mux.NewRouter()
-	r.HandleFunc("/blob/{score:[a-f0-9]{64}}", s.GetBlob).Methods("GET", "HEAD")
-	r.HandleFunc("/blob/{score:[a-f0-9]{64}}", s.PutBlob).Methods("PUT", "POST")
+	r.HandleFunc(fmt.Sprintf("/blob/{score:[a-f0-9]{%d}}", scoreLen), s.GetBlob).Methods("GET", "HEAD")
+	r.HandleFunc(fmt.Sprintf("/blob/{score:[a-f0-9]{%d}}", scoreLen), s.PutBlob).Methods("PUT", "POST")
 	r.HandleFunc("/blob/meta", s.GetMeta).Methods("GET", "HEAD")
 	addr := fmt.Sprintf(":%d", port)
 	h := &http.Server{
@@ -63,46 +68,50 @@ type server struct {
 	repo *dedup.BlobRepository
 }
 
-func (s server) GetBlob(w http.ResponseWriter, r *http.Request) {
+func scoreFromRequest(r *http.Request) (score []byte, err error) {
 	vars := mux.Vars(r)
-	scoreStr := vars["score"]
-	var score []byte
-	_, err := fmt.Sscanf(scoreStr, "%x", &score)
+	if len(vars["score"]) != scoreLen {
+		err = errors.New("Invalid score")
+		return
+	}
+	_, err = fmt.Sscanf(vars["score"], "%x", &score)
+	return
+}
+
+func (s server) GetBlob(w http.ResponseWriter, r *http.Request) {
+	score, err := scoreFromRequest(r)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "InvalidScore "+scoreStr, http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("InvalidScore %x", score), http.StatusBadRequest)
 		return
 	}
 	errCh := make(chan error, 1)
 	cancelCh := make(chan struct{})
-	log.Println("SENDING", scoreStr)
+	log.Printf("SENDING %x\n", score)
 	s.repo.Get(dedup.GetBlobRequest{Key: score, Dest: w, ErrCh: errCh, CancelCh: cancelCh})
 	err = <-errCh
 	if err != nil {
-		log.Println("ERROR SENDING", scoreStr, err)
+		log.Printf("ERROR SENDING %x: %s\n", score, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Println("SENT", scoreStr)
+	log.Printf("SENT %x\n", score)
 }
 
 func (s server) PutBlob(w http.ResponseWriter, r *http.Request) {
+	score, err := scoreFromRequest(r)
 	defer r.Body.Close()
-	vars := mux.Vars(r)
-	scoreStr := vars["score"]
-	var score []byte
-	_, err := fmt.Sscanf(scoreStr, "%x", &score)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "InvalidScore "+scoreStr, http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("InvalidScore %x", score), http.StatusBadRequest)
 		return
 	}
-	log.Println("RECEIVING", scoreStr)
+	log.Printf("RECEIVING %x\n", score)
 	if err := s.repo.Put(score, r.Body); err != nil {
 		http.Error(w, err.Error(), http.StatusNotAcceptable)
 		return
 	}
-	log.Println("RECEIVED", scoreStr)
+	log.Printf("RECEIVED %x\n", score)
 }
 
 func (s server) GetMeta(w http.ResponseWriter, r *http.Request) {

@@ -66,15 +66,15 @@ type ChunkMetadata struct {
 	// Score is the hex-encoded 256-bit Blake2 digest of the chunk
 	Score string
 	// Len is the length in bytes of the chunk
-	Len uint16
+	Len uint
 }
 
 // BlobRepository stores and fetches Binary Large Objects ("blobs")
 type BlobRepository struct {
-	chunkRepo    *KVrepository
-	metaFilename string
-	md           map[string][]ChunkMetadata
-	*sync.Mutex
+	chunkRepo    *KVrepository              // repository for chunks of blobs (goal is to deduplicate within and across blobs)
+	metaFilename string                     // where blob metadata is persisted upon shutdown and read upon startup
+	md           map[string][]ChunkMetadata // in-memory chunk index for each blob
+	*sync.Mutex                             // to allow concurrent access to md
 }
 
 // Close safely closes the underlying chunk storage
@@ -132,7 +132,7 @@ func (r *BlobRepository) Get(req GetBlobRequest) {
 		req.ErrCh <- ErrScoreNotFound{Score: req.Key, Pid: os.Getpid()}
 		return
 	}
-	buf := make([]byte, 0, maxChunkSize)
+	buf := make([]byte, 0, chunker.MaxSize)
 	hash := blake2b.New256()
 	w := io.MultiWriter(hash, req.Dest)
 	// loop through stores, getting each one from chunk repository and sending down to req.Dest
@@ -185,7 +185,7 @@ func (r *BlobRepository) Put(key []byte, blob io.Reader) (err error) {
 	// set up a multiwriter to copy the blob into a chunker and a hash function
 	hash := blake2b.New256()
 	tee := io.TeeReader(blob, hash)
-	ckr := chunker.NewWithBoundaries(tee, chunker.Pol(0x3DA3358B4DC173), 2048, maxChunkSize)
+	ckr := chunker.New(tee, chunker.Pol(0x3DA3358B4DC173))
 	buf := make([]byte, maxChunkSize)
 	var meta []ChunkMetadata
 	// track the ordered list of chunk scores
@@ -194,7 +194,7 @@ func (r *BlobRepository) Put(key []byte, blob io.Reader) (err error) {
 	for chunk, err = ckr.Next(buf); err == nil; chunk, err = ckr.Next(buf) {
 		// store each chunk in the chunk repository
 		cHash := blake2b.Sum256(chunk.Data)
-		meta = append(meta, ChunkMetadata{Score: fmt.Sprintf("%x", cHash), Len: uint16(len(chunk.Data))})
+		meta = append(meta, ChunkMetadata{Score: fmt.Sprintf("%x", cHash), Len: uint(len(chunk.Data))})
 		fmt.Printf("blob %x %04d:%x\n", key, chunkSeq, cHash)
 		if repoErr := r.chunkRepo.Put(cHash, chunk.Data); repoErr != nil {
 			return repoErr
