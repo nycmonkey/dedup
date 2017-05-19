@@ -49,9 +49,9 @@ type GetBlobRequest struct {
 	CancelCh <-chan struct{}
 }
 
-// BlobMetadata stores the information needed to rebuild a blob from chunks, and also to compare
+// BlobChunks stores the information needed to rebuild a blob from chunks, and also to compare
 // overlapping data between blobs
-type BlobMetadata struct {
+type BlobChunks struct {
 	Score  string
 	Chunks []ChunkMetadata
 }
@@ -92,7 +92,7 @@ func (r *BlobRepository) Close() error {
 }
 
 // DumpMetadata provides a point in time dump of all scores and corresponding chunks
-func (r *BlobRepository) DumpMetadata(out chan<- BlobMetadata, cancel <-chan struct{}) {
+func (r *BlobRepository) DumpMetadata(out chan<- BlobChunks, cancel <-chan struct{}) {
 	r.Lock()
 	defer r.Unlock()
 	defer close(out)
@@ -101,14 +101,14 @@ func (r *BlobRepository) DumpMetadata(out chan<- BlobMetadata, cancel <-chan str
 		case <-cancel:
 			return
 		default:
-			out <- BlobMetadata{Score: score, Chunks: chunks}
+			out <- BlobChunks{Score: score, Chunks: chunks}
 		}
 	}
 	return
 }
 
 // AppendMetadata loads a dump of blob metadata into the repository
-func (r *BlobRepository) AppendMetadata(in <-chan BlobMetadata) {
+func (r *BlobRepository) AppendMetadata(in <-chan BlobChunks) {
 	r.Lock()
 	defer r.Unlock()
 	for m := range in {
